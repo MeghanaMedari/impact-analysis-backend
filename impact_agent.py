@@ -740,8 +740,15 @@ async def download_document(document_id: str, doc_type: str, format_type: str):
 def main():
     """Main function to start the server"""
     try:
-        # For Render deployment - PORT is provided by Render
-        port_to_use = int(os.getenv("PORT", "10000"))
+        # Handle Render's PORT environment variable properly
+        port_env = os.getenv("PORT", "10000")
+        
+        # Handle case where PORT might be set to a string description
+        if port_env and port_env.isdigit():
+            port_to_use = int(port_env)
+        else:
+            port_to_use = 10000  # Default fallback
+            
         host = os.getenv("HOST", "0.0.0.0")
         
         os.makedirs(GENERATED_FILES_DIR, exist_ok=True)
