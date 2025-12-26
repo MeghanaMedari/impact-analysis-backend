@@ -5,7 +5,7 @@ Analyzes GitHub repositories and generates tech stack recommendations using Open
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
@@ -86,10 +86,10 @@ def find_available_port():
 
 # FastAPI app
 app = FastAPI(
-    title="Impact Analysis Agent", 
-    description="Analyzes GitHub repositories and generates tech stack recommendations",
-    docs_url="/api/docs", 
-    redoc_url="/api/redoc"
+    title="Impact Analysis Backend API", 
+    description="Backend API for analyzing GitHub repositories and generating tech stack recommendations",
+    docs_url="/docs", 
+    redoc_url="/redoc"
 )
 
 # Add CORS middleware
@@ -464,14 +464,15 @@ Provide SPECIFIC commands, code snippets, and configuration examples for the CHO
 agent = ImpactAnalysisAgent()
 
 # Routes
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 async def read_root():
-    """Serve the main HTML page"""
-    try:
-        with open("static/index.html", "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    except FileNotFoundError:
-        return HTMLResponse(content="<h1>Frontend files not found. Please ensure static files are deployed.</h1>")
+    """API status endpoint"""
+    return {
+        "message": "Impact Analysis Backend API is running",
+        "status": "active",
+        "docs": "/docs",
+        "version": "1.0.0"
+    }
 
 @app.post("/upload-file", response_model=FileUploadResponse)
 async def upload_file(file: UploadFile = File(...)):
