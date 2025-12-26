@@ -5,7 +5,7 @@ Analyzes GitHub repositories and generates tech stack recommendations using Open
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
@@ -55,7 +55,7 @@ except ImportError:
     DOC_SUPPORT = False
 
 # Configuration
-API_KEY = os.getenv("API_KEY", "")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 MODEL = os.getenv("MODEL", "gpt-3.5-turbo")
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.3"))
 API_URL = os.getenv("API_URL", "https://openrouter.ai/api/v1/chat/completions")
@@ -123,7 +123,7 @@ class AnalysisResponse(BaseModel):
 # Agent class
 class ImpactAnalysisAgent:
     def __init__(self):
-        self.api_key = API_KEY
+        self.api_key = OPENROUTER_API_KEY
         self.model = MODEL
         self.temperature = TEMPERATURE
         self.api_url = API_URL
@@ -302,7 +302,7 @@ class ImpactAnalysisAgent:
     def call_openai_api(self, prompt, max_retries=3):
         """Make API call to OpenAI with retry logic"""
         if not self.api_key:
-            raise Exception("API_KEY not configured")
+            raise Exception("OPENROUTER_API_KEY not configured")
             
         for attempt in range(max_retries):
             try:
@@ -467,178 +467,11 @@ agent = ImpactAnalysisAgent()
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     """Serve the main HTML page"""
-    html_content = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impact Analysis Agent</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        input[type="url"], input[type="file"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; }
-        button { background: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        .status { margin-top: 20px; padding: 10px; border-radius: 5px; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .results { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 5px; }
-        .btn-small { background: #28a745; color: white; padding: 5px 10px; margin: 2px; border: none; border-radius: 3px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚀 Impact Analysis Agent</h1>
-        <form id="analysisForm">
-            <div class="form-group">
-                <label for="repoUrl">GitHub Repository URL:</label>
-                <input type="url" id="repoUrl" placeholder="https://github.com/username/repository" required>
-            </div>
-            <div class="form-group">
-                <label for="archFile">Architecture Document:</label>
-                <input type="file" id="archFile" accept=".pdf,.doc,.docx,.txt" required>
-            </div>
-            <div class="form-group">
-                <label for="prdFile">PRD Document (Optional):</label>
-                <input type="file" id="prdFile" accept=".pdf,.doc,.docx,.txt">
-            </div>
-            <button type="submit" id="analyzeBtn">🔍 Analyze Project</button>
-        </form>
-        <div id="status"></div>
-        <div id="results" style="display: none;">
-            <h3>📋 Analysis Results</h3>
-            <div>
-                <button class="btn-small" onclick="downloadDocument('prompt', 'txt')">Download TXT</button>
-                <button class="btn-small" onclick="downloadDocument('prompt', 'pdf')">Download PDF</button>
-            </div>
-            <div id="analysisContent"></div>
-        </div>
-    </div>
-
-    <script>
-        let fileContents = { architecture: '', prd: '' };
-        let currentDocumentId = null;
-
-        document.getElementById('archFile').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) await handleFileUpload(file, 'Architecture', 'architecture');
-        });
-
-        document.getElementById('prdFile').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) await handleFileUpload(file, 'PRD', 'prd');
-        });
-
-        async function handleFileUpload(file, fileType, contentKey) {
-            const status = document.getElementById('status');
-            status.innerHTML = `<div style="color: #007bff;">Processing ${fileType} file...</div>`;
-            
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                const response = await fetch('/upload-file', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    fileContents[contentKey] = data.extracted_text;
-                    status.innerHTML = `<div class="success">✅ ${fileType} file processed!</div>`;
-                } else {
-                    throw new Error(data.error || 'File processing failed');
-                }
-            } catch (error) {
-                fileContents[contentKey] = '';
-                status.innerHTML = `<div class="error">❌ ${fileType} Error: ${error.message}</div>`;
-            }
-        }
-
-        document.getElementById('analysisForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const repoUrl = document.getElementById('repoUrl').value;
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            const status = document.getElementById('status');
-            const results = document.getElementById('results');
-            
-            if (!fileContents.architecture) {
-                status.innerHTML = '<div class="error">❌ Please upload an Architecture document!</div>';
-                return;
-            }
-            
-            analyzeBtn.disabled = true;
-            analyzeBtn.textContent = '🔄 Analyzing...';
-            status.innerHTML = '<div style="color: #007bff;">🔄 Analyzing repository...</div>';
-            
-            try {
-                const response = await fetch('/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        repo_url: repoUrl,
-                        architecture_content: fileContents.architecture,
-                        prd_content: fileContents.prd
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentDocumentId = data.document_id;
-                    document.getElementById('analysisContent').innerHTML = 
-                        `<pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${data.analysis}</pre>`;
-                    results.style.display = 'block';
-                    status.innerHTML = '<div class="success">✅ Analysis completed!</div>';
-                } else {
-                    throw new Error(data.error || 'Analysis failed');
-                }
-            } catch (error) {
-                status.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
-            } finally {
-                analyzeBtn.disabled = false;
-                analyzeBtn.textContent = '🔍 Analyze Project';
-            }
-        });
-
-        async function downloadDocument(docType, format) {
-            if (!currentDocumentId) {
-                alert('No documents available');
-                return;
-            }
-            
-            try {
-                const url = `/download/${currentDocumentId}/${docType}/${format}`;
-                const response = await fetch(url);
-                
-                if (!response.ok) throw new Error('Download failed');
-                
-                const blob = await response.blob();
-                const downloadUrl = window.URL.createObjectURL(blob);
-                
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = `${docType}_${currentDocumentId}.${format}`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                window.URL.revokeObjectURL(downloadUrl);
-            } catch (error) {
-                alert(`Download failed: ${error.message}`);
-            }
-        }
-    </script>
-</body>
-</html>
-    """
-    return HTMLResponse(content=html_content)
+    try:
+        with open("static/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Frontend files not found. Please ensure static files are deployed.</h1>")
 
 @app.post("/upload-file", response_model=FileUploadResponse)
 async def upload_file(file: UploadFile = File(...)):
@@ -741,15 +574,15 @@ def main():
     """Main function to start the server"""
     try:
         # Handle Render's PORT environment variable properly
-        port_env = os.getenv("PORT", "10000")
+        port_env = os.getenv("PORT")
         
-        # Handle case where PORT might be set to a string description
+        # Use Render's assigned port or fallback to 10000
         if port_env and port_env.isdigit():
             port_to_use = int(port_env)
         else:
-            port_to_use = 10000  # Default fallback
+            port_to_use = 10000
             
-        host = os.getenv("HOST", "0.0.0.0")
+        host = "0.0.0.0"
         
         os.makedirs(GENERATED_FILES_DIR, exist_ok=True)
         

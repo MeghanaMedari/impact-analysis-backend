@@ -4,116 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Impact Analysis Agent</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🚀 Impact Analysis Agent</h1>
-            <p>✨ Intelligent GitHub Repository Analysis & Tech Stack Recommendations ✨</p>
-            <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
-                🤖 AI-Powered • 📂 Repository Cloning • 📝 Smart Prompts
+        <h1>🚀 Impact Analysis Agent</h1>
+        <form id="analysisForm">
+            <div class="form-group">
+                <label for="repoUrl">GitHub Repository URL:</label>
+                <input type="url" id="repoUrl" placeholder="https://github.com/username/repository" required>
             </div>
-        </div>
-        
-        <div class="main-content">
-            <div class="card">
-                <h2>📊 Project Analysis</h2>
-                <div style="background: linear-gradient(45deg, rgba(102,126,234,0.1), rgba(240,147,251,0.1)); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(102,126,234,0.2);">
-                    <span style="font-size: 0.9em; color: #667eea; font-weight: 500;">📁 Upload your project files below 📁</span>
-                </div>
-                <form id="analysisForm">
-                    <div class="form-group">
-                        <label for="repoUrl">GitHub Repository URL</label>
-                        <input type="url" id="repoUrl" placeholder="https://github.com/username/repository" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="archFile">Architecture Document</label>
-                        <input type="file" id="archFile" accept=".pdf,.doc,.docx,.txt,.json" required>
-                        <small>Upload PDF, DOC, DOCX, TXT, or JSON file (required)</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="prdFile">PRD Document</label>
-                        <input type="file" id="prdFile" accept=".pdf,.doc,.docx,.txt,.json">
-                        <small>Upload Product Requirements Document (optional)</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="apiEndpoints">API Endpoints</label>
-                        <textarea id="apiEndpoints" rows="6" placeholder="Enter API endpoints (one per line):
-GET /api/users - Get all users
-POST /api/users - Create user
-GET /api/users/:id - Get user by ID
-PUT /api/users/:id - Update user
-DELETE /api/users/:id - Delete user"></textarea>
-                        <small>Enter your required API endpoints (optional)</small>
-                    </div>
-                    
-                    <button type="submit" class="btn" id="analyzeBtn">
-                        🔍 Analyze Project
-                    </button>
-                </form>
-                
-                <div id="status"></div>
+            <div class="form-group">
+                <label for="archFile">Architecture Document:</label>
+                <input type="file" id="archFile" accept=".pdf,.doc,.docx,.txt" required>
             </div>
-            
-            <div class="card">
-                <h2>📋 Analysis Results</h2>
-                <div style="background: linear-gradient(45deg, rgba(102,126,234,0.1), rgba(240,147,251,0.1)); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(102,126,234,0.2);">
-                    <span style="font-size: 0.9em; color: #667eea; font-weight: 500;">🎆 Your comprehensive development prompt will appear here 🎆</span>
-                </div>
-                
-                <div id="loading" class="loading" style="display: none;">
-                    <div class="spinner"></div>
-                    <p>Analyzing repository and generating recommendations...</p>
-                </div>
-                
-                <div id="results" class="results">
-                    <div class="result-section">
-                        <h3>📝 Generated Documents</h3>
-                        <div class="download-section">
-                            <h4>Download Options:</h4>
-                            <div class="download-grid">
-                                <div class="download-item">
-                                    <h5>📋 Coding Prompt</h5>
-                                    <div class="format-buttons">
-                                        <button onclick="downloadDocument('prompt', 'json')" class="btn-small">JSON</button>
-                                        <button onclick="downloadDocument('prompt', 'txt')" class="btn-small">TXT</button>
-                                        <button onclick="downloadDocument('prompt', 'pdf')" class="btn-small">PDF</button>
-                                        <button onclick="downloadDocument('prompt', 'doc')" class="btn-small">DOC</button>
-                                    </div>
-                                </div>
-                                <div class="download-item">
-                                    <h5>🏗️ Architecture</h5>
-                                    <div class="format-buttons">
-                                        <button onclick="downloadDocument('architecture', 'json')" class="btn-small">JSON</button>
-                                        <button onclick="downloadDocument('architecture', 'txt')" class="btn-small">TXT</button>
-                                        <button onclick="downloadDocument('architecture', 'pdf')" class="btn-small">PDF</button>
-                                        <button onclick="downloadDocument('architecture', 'doc')" class="btn-small">DOC</button>
-                                    </div>
-                                </div>
-                                <div class="download-item">
-                                    <h5>📄 PRD Document</h5>
-                                    <div class="format-buttons">
-                                        <button onclick="downloadDocument('prd', 'json')" class="btn-small">JSON</button>
-                                        <button onclick="downloadDocument('prd', 'txt')" class="btn-small">TXT</button>
-                                        <button onclick="downloadDocument('prd', 'pdf')" class="btn-small">PDF</button>
-                                        <button onclick="downloadDocument('prd', 'doc')" class="btn-small">DOC</button>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                        <div id="codingPromptContent"></div>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label for="prdFile">PRD Document (Optional):</label>
+                <input type="file" id="prdFile" accept=".pdf,.doc,.docx,.txt">
             </div>
+            <button type="submit" id="analyzeBtn">🔍 Analyze Project</button>
+        </form>
+        <div id="status"></div>
+        <div id="results" style="display: none;">
+            <h3>📋 Analysis Results</h3>
+            <div>
+                <button class="btn-small" onclick="downloadDocument('prompt', 'txt')">Download TXT</button>
+                <button class="btn-small" onclick="downloadDocument('prompt', 'pdf')">Download PDF</button>
+            </div>
+            <div id="analysisContent"></div>
         </div>
     </div>
-
-    <script src="/static/script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

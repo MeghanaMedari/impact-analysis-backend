@@ -1,16 +1,11 @@
 services:
   - type: web
-    name: impact-analysis-agent
+    name: impact-analysis-api
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python impact_agent.py
-    plan: free
+    startCommand: uvicorn impact_agent:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: ENVIRONMENT
-        value: production
-      - key: HOST
-        value: 0.0.0.0
-      - key: API_KEY
+      - key: OPENROUTER_API_KEY
         sync: false
       - key: MODEL
         value: openai/gpt-3.5-turbo
@@ -18,9 +13,7 @@ services:
         value: "0.3"
       - key: API_URL
         value: https://openrouter.ai/api/v1/chat/completions
-      - key: MAX_TOKENS
-        value: "4500"
-      - key: GENERATED_FILES_DIR
-        value: /tmp/generated_files
-      - key: PRD_DOCUMENTS_DIR
-        value: /tmp/prd_documents
+      - key: HOST
+        value: 0.0.0.0
+      - key: ALLOWED_ORIGINS
+        value: "*"
